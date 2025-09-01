@@ -38,15 +38,11 @@ export interface Recommendation {
 
 // Complete report data
 export interface Report {
-  reportId: string;
+  reportId: number;
+  llm_result: string;
   patientName: string;
   patientId: string;
   reportDate: string;
-  doctorName?: string;
-  summary: string;
-  keyFindings: KeyFinding[];
-  categories: CategoryData[];
-  recommendations: Recommendation[];
 }
 
 // Report history item

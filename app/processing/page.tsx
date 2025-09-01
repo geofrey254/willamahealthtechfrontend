@@ -1,30 +1,51 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import LoadingSpinner from "@/components/processing/LoadingSpinner";
+import { getReportById } from "@/lib/api"; // Make sure you have this API utility
 
 export default function ProcessingPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Check if we have a reportId
     const reportId = sessionStorage.getItem("reportId");
     if (!reportId) {
-      router.push("/upload");
+      router.push("/upload"); // Redirect to upload page if no reportId
       return;
     }
 
-    // Simulate processing - in a real app, you'd poll an API endpoint
-    const processTimer = setTimeout(() => {
-      router.push("/results");
-    }, 5000); // Redirect after 5 seconds
+    const fetchReportData = async () => {
+      try {
+        // Simulate fetching report data after processing
+        const report = await getReportById(reportId);
 
-    return () => clearTimeout(processTimer);
+        // Store the report in sessionStorage or state to pass it to results page
+        sessionStorage.setItem("reportData", JSON.stringify(report));
+
+        // Simulate processing time and then redirect to results page
+        const processTimer = setTimeout(() => {
+          router.push("/results"); // Redirect to results after processing
+        }, 5000); // 5 seconds delay
+
+        return () => clearTimeout(processTimer);
+      } catch (err) {
+        setError("Failed to fetch report data.");
+        console.error("Error fetching report:", err);
+        setLoading(false);
+      }
+    };
+
+    fetchReportData(); // Trigger report fetching and processing
   }, [router]);
 
+  if (loading) return <LoadingSpinner />;
+
   return (
-    <div className="flex flex-col items-center justify-center h-[90vh] space-y-8 px-4 ">
+    <div className="flex flex-col items-center justify-center h-[90vh] space-y-8 px-4 mt-12">
       <LoadingSpinner />
 
       <div className="text-center space-y-4">
@@ -59,6 +80,12 @@ export default function ProcessingPage() {
           </li>
         </ul>
       </div>
+
+      {error && (
+        <div className="text-center text-red-500">
+          <p>{error}</p>
+        </div>
+      )}
 
       <div className="text-center mt-4 animate-pulse">
         <p className="text-sm text-[#214842]">

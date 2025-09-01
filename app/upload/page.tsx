@@ -33,7 +33,7 @@ export default function UploadPage() {
             <li>Other standard blood test reports</li>
           </ul>
           <p className="mt-4 text-gray-600 border-t border-[#f4d392]/30 pt-3">
-            Reports must be in PDF format. Maximum file size: 10MB.
+            Reports must be in PDF format. Maximum file size: 5MB.
           </p>
         </div>
       </div>

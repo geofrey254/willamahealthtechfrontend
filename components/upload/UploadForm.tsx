@@ -38,14 +38,14 @@ export default function UploadForm() {
       return;
     }
 
-    if (file.type !== "application/pdf") {
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
       setError("Only PDF files are accepted");
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > 5 * 1024 * 1024) {
       // 10MB in bytes
-      setError("File size exceeds 10MB limit");
+      setError("File size exceeds 5MB limit");
       return;
     }
 
@@ -63,7 +63,11 @@ export default function UploadForm() {
       router.push("/processing");
     } catch (err) {
       setError("Failed to upload file. Please try again.");
-      console.error("Upload error:", err);
+      if (err instanceof Error) {
+        console.error("Upload error:", err.message);
+      } else {
+        console.error("Upload error (raw):", err);
+      }
     } finally {
       setLoading(false);
     }

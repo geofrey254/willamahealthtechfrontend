@@ -23,7 +23,7 @@ export default function DropZone({ onDrop, file }: DropZoneProps) {
       "application/pdf": [".pdf"],
     },
     maxFiles: 1,
-    maxSize: 10 * 1024 * 1024, // 10MB
+    maxSize: 5 * 1024 * 1024, // 5MB
   });
 
   return (

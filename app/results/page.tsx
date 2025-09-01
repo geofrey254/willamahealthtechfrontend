@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import ReportViewer from "@/components/results/ReportViewer";
-import { getReportResults } from "@/lib/api";
+import { getReportById } from "@/lib/api"; // Make sure to use the correct function here
 import { Report } from "@/lib/types";
 import LoadingSpinner from "@/components/processing/LoadingSpinner";
 
@@ -25,7 +25,7 @@ export default function ResultsPage() {
           return;
         }
 
-        const reportData = await getReportResults(reportId);
+        const reportData = await getReportById(reportId); // Use the correct API call
         setReport(reportData);
       } catch (err) {
         console.error("Error fetching results:", err);

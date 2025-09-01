@@ -1,216 +1,163 @@
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ReportSection from "./ReportSection";
-import { Report } from "@/lib/types";
+import { useState } from "react";
+import Markdown from "react-markdown";
+import { Report } from "@/lib/types"; // Adjust the import path as necessary
 
 interface ReportViewerProps {
   report: Report;
 }
 
 export default function ReportViewer({ report }: ReportViewerProps) {
-  const abnormalCount = report.categories.reduce((count, category) => {
+  const [activeTab, setActiveTab] = useState("summary");
+
+  if (!report || !report.llm_result) {
     return (
-      count + category.tests.filter((test) => test.status === "abnormal").length
+      <div className="flex items-center justify-center h-64 bg-gray-100 rounded-lg">
+        <p className="text-gray-500">No report data available</p>
+      </div>
     );
-  }, 0);
+  }
+
+  // Extract patient info for the header
+  const patientName = report.patientName;
+  const patientId = report.patientId;
+  const reportDate = report.reportDate;
+  const reportId = report.reportId;
+
+  return (
+    <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+      {/* Report Header */}
+      <div className="bg-[#214842] text-white p-4">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold">{patientName}</h1>
+            <div className="flex space-x-4 mt-2">
+              <div>
+                <span className="text-[#f4d392]">Patient ID:</span> {patientId}
+              </div>
+              <div>
+                <span className="text-[#f4d392]">Report Date:</span>{" "}
+                {reportDate}
+              </div>
+              <div>
+                <span className="text-[#f4d392]">Report ID:</span> {reportId}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tab navigation */}
+      <div className="flex border-b border-gray-200">
+        <button
+          className={`px-4 py-2 font-medium ${
+            activeTab === "summary"
+              ? "border-b-2 border-[#214842] text-[#214842]"
+              : "text-gray-600 hover:text-[#214842]"
+          }`}
+          onClick={() => setActiveTab("summary")}
+        >
+          Summary
+        </button>
+        <button
+          className={`px-4 py-2 font-medium ${
+            activeTab === "full"
+              ? "border-b-2 border-[#214842] text-[#214842]"
+              : "text-gray-600 hover:text-[#214842]"
+          }`}
+          onClick={() => setActiveTab("full")}
+        >
+          Full Report
+        </button>
+      </div>
+
+      {/* Report Content */}
+      <div className="p-6">
+        {activeTab === "summary" ? (
+          <div>
+            <h2 className="text-xl font-bold text-[#214842] mb-4">
+              Diagnosis Summary
+            </h2>
+            <SummaryView report={report} />
+          </div>
+        ) : (
+          <div className="prose max-w-none">
+            <Markdown>{report.llm_result}</Markdown>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SummaryView({ report }: { report: Report }) {
+  // Extract key sections from the report
+  const lines = report.llm_result.split("\n");
+
+  // Extract diagnosis summary section
+  const diagnosisStart = lines.findIndex((line) =>
+    line.includes("Diagnosis Summary")
+  );
+  const abnormalStart = lines.findIndex((line) =>
+    line.includes("Abnormal Findings")
+  );
+  const diagnosisContent = lines
+    .slice(diagnosisStart + 1, abnormalStart)
+    .filter((line) => line.trim() !== "")
+    .join("\n");
+
+  // Extract abnormal findings
+  const recommendedStart = lines.findIndex((line) =>
+    line.includes("Recommended Actions")
+  );
+  const abnormalContent = lines
+    .slice(abnormalStart + 1, recommendedStart)
+    .filter((line) => line.trim() !== "")
+    .join("\n");
+
+  // Extract recommendations
+  const conclusionStart = lines.findIndex((line) =>
+    line.includes("Conclusion")
+  );
+  const recommendedContent = lines
+    .slice(recommendedStart + 1, conclusionStart)
+    .filter((line) => line.trim() !== "")
+    .join("\n");
+
+  // Extract conclusion
+  const conclusionContent = lines
+    .slice(conclusionStart + 1)
+    .filter((line) => line.trim() !== "")
+    .join("\n");
 
   return (
     <div className="space-y-6">
-      <Card className="p-6 bg-white shadow-md border-l-4 border-[#f4d392]">
-        <div className="grid md:grid-cols-3 gap-4">
-          <div className="space-y-1">
-            <h3 className="text-sm font-medium text-[#214842]">Patient</h3>
-            <p className="font-medium">{report.patientName}</p>
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-sm font-medium text-[#214842]">Report Date</h3>
-            <p className="font-medium">{report.reportDate}</p>
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-sm font-medium text-[#214842]">Report ID</h3>
-            <p className="font-medium">{report.reportId}</p>
-          </div>
+      <div className="bg-white p-4 rounded-lg border-l-4 border-[#214842] shadow-sm">
+        <h3 className="font-bold text-[#214842] mb-2">Key Findings</h3>
+        <div className="prose text-sm text-gray-700">
+          <Markdown>{diagnosisContent}</Markdown>
         </div>
-      </Card>
+      </div>
 
-      <Card className="bg-white shadow-md">
-        <Tabs defaultValue="summary">
-          <TabsList className="w-full bg-[#f4d392]/10 rounded-t-lg rounded-b-none border-b border-[#f4d392]/30">
-            <TabsTrigger
-              value="summary"
-              className="data-[state=active]:bg-white data-[state=active]:text-[#214842] data-[state=active]:font-medium"
-            >
-              Summary
-            </TabsTrigger>
-            <TabsTrigger
-              value="detailed"
-              className="data-[state=active]:bg-white data-[state=active]:text-[#214842] data-[state=active]:font-medium"
-            >
-              Detailed Results
-            </TabsTrigger>
-            <TabsTrigger
-              value="abnormal"
-              className="data-[state=active]:bg-white data-[state=active]:text-[#214842] data-[state=active]:font-medium"
-            >
-              Abnormal Results
-              {abnormalCount > 0 && (
-                <span className="ml-2 bg-red-100 text-red-800 text-xs font-medium px-2 py-0.5 rounded-full">
-                  {abnormalCount}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger
-              value="recommendations"
-              className="data-[state=active]:bg-white data-[state=active]:text-[#214842] data-[state=active]:font-medium"
-            >
-              Recommendations
-            </TabsTrigger>
-          </TabsList>
+      <div className="bg-white p-4 rounded-lg border-l-4 border-[#f4d392] shadow-sm">
+        <h3 className="font-bold text-[#214842] mb-2">Abnormal Findings</h3>
+        <div className="prose text-sm text-gray-700">
+          <Markdown>{abnormalContent}</Markdown>
+        </div>
+      </div>
 
-          <TabsContent value="summary" className="p-6">
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-semibold mb-4 text-[#214842]">
-                  Report Summary
-                </h2>
-                <p className="text-gray-600">{report.summary}</p>
-              </div>
+      <div className="bg-[#f4d392] bg-opacity-10 p-4 rounded-lg border border-[#f4d392] shadow-sm">
+        <h3 className="font-bold text-[#214842] mb-2">Recommended Actions</h3>
+        <div className="prose text-sm text-gray-700">
+          <Markdown>{recommendedContent}</Markdown>
+        </div>
+      </div>
 
-              <div>
-                <h3 className="text-lg font-medium mb-3 text-[#214842]">
-                  Key Findings
-                </h3>
-                <ul className="space-y-2">
-                  {report.keyFindings.map((finding, index) => (
-                    <li key={index} className="flex gap-3">
-                      <div
-                        className={`w-2 h-2 rounded-full mt-2 ${
-                          finding.type === "concern"
-                            ? "bg-red-500"
-                            : finding.type === "warning"
-                            ? "bg-[#f4d392]"
-                            : "bg-green-500"
-                        }`}
-                      ></div>
-                      <p className="text-sm">{finding.text}</p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="detailed" className="p-6">
-            <h2 className="text-xl font-semibold mb-6 text-[#214842]">
-              Detailed Test Results
-            </h2>
-            <div className="space-y-8">
-              {report.categories.map((category) => (
-                <ReportSection key={category.name} category={category} />
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="abnormal" className="p-6">
-            <h2 className="text-xl font-semibold mb-6 text-[#214842]">
-              Abnormal Results
-            </h2>
-            {abnormalCount === 0 ? (
-              <p className="text-green-600">
-                No abnormal results detected in your report!
-              </p>
-            ) : (
-              <div className="space-y-6">
-                {report.categories.map((category) => {
-                  const abnormalTests = category.tests.filter(
-                    (test) => test.status === "abnormal"
-                  );
-                  if (abnormalTests.length === 0) return null;
-
-                  return (
-                    <div
-                      key={category.name}
-                      className="pb-6 border-b border-gray-200 last:border-0"
-                    >
-                      <h3 className="text-lg font-medium mb-4 text-[#214842]">
-                        {category.name}
-                      </h3>
-                      <table className="w-full">
-                        <thead className="bg-[#f4d392]/10">
-                          <tr>
-                            <th className="px-4 py-2 text-left text-[#214842]">
-                              Test
-                            </th>
-                            <th className="px-4 py-2 text-right text-[#214842]">
-                              Your Value
-                            </th>
-                            <th className="px-4 py-2 text-right text-[#214842]">
-                              Reference Range
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {abnormalTests.map((test) => (
-                            <tr
-                              key={test.name}
-                              className="border-b last:border-0"
-                            >
-                              <td className="px-4 py-3">
-                                <div>
-                                  <p className="font-medium">{test.name}</p>
-                                  <p className="text-sm text-gray-600">
-                                    {test.description}
-                                  </p>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                <span className="font-semibold text-red-600">
-                                  {test.value} {test.unit}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-right text-gray-600">
-                                {test.referenceRange}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="recommendations" className="p-6">
-            <h2 className="text-xl font-semibold mb-6 text-[#214842]">
-              Recommendations
-            </h2>
-            <div className="space-y-4">
-              {report.recommendations.map((rec, index) => (
-                <div
-                  key={index}
-                  className="pb-4 border-b border-gray-100 last:border-0"
-                >
-                  <h3 className="font-medium mb-2 text-[#214842]">
-                    {rec.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm">{rec.description}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-8 p-4 bg-[#214842]/10 text-[#214842] rounded-md border-l-4 border-[#214842]">
-              <p className="text-sm">
-                <strong>Note:</strong> These recommendations are generated
-                automatically based on your test results. Always consult with
-                your healthcare provider before making any changes to your
-                treatment plan or lifestyle.
-              </p>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </Card>
+      <div className="bg-[#214842] bg-opacity-5 p-4 rounded-lg border border-[#214842] border-opacity-20 shadow-sm">
+        <h3 className="font-bold text-[#214842] mb-2">Conclusion</h3>
+        <div className="prose text-sm text-white">
+          <Markdown>{conclusionContent}</Markdown>
+        </div>
+      </div>
     </div>
   );
 }
