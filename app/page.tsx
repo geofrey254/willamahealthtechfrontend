@@ -46,7 +46,7 @@ export default function Home() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/history" passHref>
+            <Link href="/" passHref>
               <Button
                 variant="outline"
                 className="w-full border-[#214842] text-[#214842] hover:bg-[#f4d392]/10"
