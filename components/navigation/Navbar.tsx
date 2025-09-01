@@ -67,7 +67,7 @@ export default function Navbar() {
                   <span className="text-xs text-[#f4d392]/80 font-bold tracking-[0.2em]">
                     MEDICAL REPORT
                   </span>
-                  <div className="w-1 h-1 bg-[#f4d392] rounded-full animate-pulse"></div>
+                  <div className="w-1 h-1 bg-[#f4d392] rounded-3xl animate-pulse"></div>
                   <span className="text-xs text-[#f4d392]/80 font-bold tracking-[0.2em]">
                     ANALYZER
                   </span>
